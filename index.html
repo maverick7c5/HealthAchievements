@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Health Achievements</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0d12;--bg2:#13131a;--bg3:#1a1a24;--card:#181822;--card-hover:#1e1e2c;
+  --border:#252535;--border2:#353550;--text:#e2e2ef;--text2:#8888a8;--text3:#4a4a68;
+  --bronze:#CD7F32;--bronze-bg:rgba(205,127,50,.13);--bronze-t:#f0a040;
+  --silver:#a8aaaf;--silver-bg:rgba(168,170,175,.12);--silver-t:#ccced4;
+  --gold:#D4AF37;--gold-bg:rgba(212,175,55,.13);--gold-t:#f0d060;
+  --platinum:#9b7bff;--platinum-bg:rgba(155,123,255,.13);--platinum-t:#c4aaff;
+  --accent:#5b6af0;
+}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+.app-header{background:var(--bg2);border-bottom:1px solid var(--border);padding:.9rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;gap:1rem;flex-wrap:wrap}
+.logo{font-size:17px;font-weight:700;letter-spacing:-.3px;white-space:nowrap}
+.logo span{color:var(--accent)}
+.header-stats{display:flex;gap:1.5rem;flex-shrink:0}
+.hstat{text-align:center}
+.hstat-num{font-size:22px;font-weight:700;color:var(--text);line-height:1}
+.hstat-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;margin-top:2px}
+.progress-section{background:var(--bg2);border-bottom:1px solid var(--border);padding:.6rem 2rem}
+.pbar-row{display:flex;align-items:center;gap:1rem}
+.pbar-wrap{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+.pbar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--platinum-t));border-radius:3px;transition:width .6s ease}
+.pbar-label{font-size:12px;color:var(--text3);white-space:nowrap}
+.tier-summary{background:var(--bg2);border-bottom:1px solid var(--border);padding:.7rem 2rem;display:flex;gap:1.5rem;flex-wrap:wrap}
+.tsum{display:flex;align-items:center;gap:7px;font-size:12px}
+.tsum-dot{width:8px;height:8px;border-radius:50%}
+.tsum-num{font-weight:600;color:var(--text)}
+.tsum-label{color:var(--text3)}
+.main{max-width:1160px;margin:0 auto;padding:1.5rem 2rem}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1.25rem}
+.tab{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;font-size:13px;color:var(--text2);cursor:pointer;transition:all .15s;font-family:inherit;display:flex;align-items:center;gap:5px}
+.tab:hover{border-color:var(--border2);color:var(--text)}
+.tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.tab .cnt{font-size:11px;opacity:.7;background:rgba(255,255,255,.15);padding:1px 5px;border-radius:8px}
+.controls{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem}
+.ctrl-label{font-size:13px;color:var(--text3)}
+.ctrl-right{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.sort-btn{padding:5px 11px;border-radius:8px;border:1px solid var(--border);background:transparent;font-size:12px;color:var(--text2);cursor:pointer;font-family:inherit;transition:all .15s}
+.sort-btn:hover,.sort-btn.active{border-color:var(--border2);color:var(--text);background:var(--bg3)}
+.reset-btn{padding:5px 11px;border-radius:8px;border:1px solid var(--border);background:transparent;font-size:12px;color:var(--text3);cursor:pointer;font-family:inherit;transition:all .15s}
+.reset-btn:hover{border-color:#e24b4a66;color:#e24b4a}
+.sec-hdr{font-size:11px;text-transform:uppercase;letter-spacing:.9px;color:var(--text3);margin:1.75rem 0 .9rem;font-weight:600;display:flex;align-items:center;gap:10px}
+.sec-hdr::after{content:'';flex:1;height:1px;background:var(--border)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:14px;cursor:pointer;transition:all .18s;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:9px}
+.card:hover{background:var(--card-hover);border-color:var(--border2);transform:translateY(-2px)}
+.card.locked{opacity:.52}
+.tier-line{position:absolute;top:0;left:0;right:0;height:2.5px}
+.t-bronze .tier-line{background:var(--bronze)}
+.t-silver .tier-line{background:var(--silver)}
+.t-gold .tier-line{background:var(--gold)}
+.t-platinum .tier-line{background:linear-gradient(90deg,#9b7bff,#e040fb,#9b7bff)}
+.t-bronze.unlocked{box-shadow:0 0 0 1px rgba(205,127,50,.25),0 4px 20px rgba(205,127,50,.07)}
+.t-silver.unlocked{box-shadow:0 0 0 1px rgba(168,170,175,.22),0 4px 16px rgba(168,170,175,.06)}
+.t-gold.unlocked{box-shadow:0 0 0 1px rgba(212,175,55,.3),0 4px 20px rgba(212,175,55,.09)}
+.t-platinum.unlocked{box-shadow:0 0 0 1px rgba(155,123,255,.35),0 4px 22px rgba(155,123,255,.12)}
+.card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.icon-box{width:40px;height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.t-bronze .icon-box{background:var(--bronze-bg)}
+.t-silver .icon-box{background:var(--silver-bg)}
+.t-gold .icon-box{background:var(--gold-bg)}
+.t-platinum .icon-box{background:var(--platinum-bg)}
+.right-top{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.tier-pill{font-size:9px;font-weight:700;padding:3px 7px;border-radius:9px;letter-spacing:.4px;text-transform:uppercase}
+.t-bronze .tier-pill{background:var(--bronze-bg);color:var(--bronze-t)}
+.t-silver .tier-pill{background:var(--silver-bg);color:var(--silver-t)}
+.t-gold .tier-pill{background:var(--gold-bg);color:var(--gold-t)}
+.t-platinum .tier-pill{background:var(--platinum-bg);color:var(--platinum-t)}
+.check{font-size:14px;color:#4ade80;opacity:0;transition:opacity .2s}
+.card.unlocked .check{opacity:1}
+.card-name{font-size:12.5px;font-weight:600;color:var(--text);line-height:1.35}
+.card-desc{font-size:11.5px;color:var(--text2);line-height:1.5;flex:1}
+.card-footer{display:flex;align-items:flex-end;justify-content:space-between;gap:6px;margin-top:2px}
+.cat-label{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)}
+.status-done{font-size:10.5px;color:#4ade80;font-weight:500}
+.status-todo{font-size:10.5px;color:var(--text3)}
+.unlock-date{font-size:9px;color:var(--text3);text-align:right}
+.toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(100px);background:var(--bg3);border:1px solid var(--border2);border-radius:12px;padding:11px 22px;font-size:13px;color:var(--text);opacity:0;transition:all .3s ease;z-index:999;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+</style>
+</head>
+<body>
+<header class="app-header">
+  <div class="logo">Health<span>Achievements</span></div>
+  <div class="header-stats">
+    <div class="hstat"><div class="hstat-num" id="h-unlocked">0</div><div class="hstat-label">Odblokowane</div></div>
+    <div class="hstat"><div class="hstat-num" id="h-total">100</div><div class="hstat-label">Wszystkich</div></div>
+    <div class="hstat"><div class="hstat-num" id="h-pct">0%</div><div class="hstat-label">Ukończono</div></div>
+  </div>
+</header>
+<div class="progress-section">
+  <div class="pbar-row">
+    <div class="pbar-wrap"><div class="pbar-fill" id="pbar" style="width:0%"></div></div>
+    <span class="pbar-label" id="pbar-label">0 / 100</span>
+  </div>
+</div>
+<div class="tier-summary">
+  <div class="tsum"><div class="tsum-dot" style="background:var(--bronze)"></div><span class="tsum-num" id="ts-b">0</span><span class="tsum-label">/ 30 Brąz</span></div>
+  <div class="tsum"><div class="tsum-dot" style="background:var(--silver)"></div><span class="tsum-num" id="ts-s">0</span><span class="tsum-label">/ 35 Srebro</span></div>
+  <div class="tsum"><div class="tsum-dot" style="background:var(--gold)"></div><span class="tsum-num" id="ts-g">0</span><span class="tsum-label">/ 22 Złoto</span></div>
+  <div class="tsum"><div class="tsum-dot" style="background:var(--platinum-t)"></div><span class="tsum-num" id="ts-p">0</span><span class="tsum-label">/ 13 Platyna</span></div>
+</div>
+<main class="main">
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-cat="all">Wszystkie</button>
+    <button class="tab" data-cat="sen">🌙 Sen</button>
+    <button class="tab" data-cat="cardio">🏃 Cardio</button>
+    <button class="tab" data-cat="zywienie">🥗 Żywienie</button>
+    <button class="tab" data-cat="suplementy">💊 Suplementy</button>
+    <button class="tab" data-cat="nawodnienie">💧 Nawodnienie</button>
+  </div>
+  <div class="controls">
+    <span class="ctrl-label" id="ctrl-label">Kliknij achievement aby go odblokować</span>
+    <div class="ctrl-right">
+      <button class="sort-btn active" data-sort="default">Domyślnie</button>
+      <button class="sort-btn" data-sort="tier">Poziom</button>
+      <button class="sort-btn" data-sort="unlocked">Odblokowane</button>
+      <button class="reset-btn" id="reset-btn">Resetuj postęp</button>
+    </div>
+  </div>
+  <div id="grid-container"></div>
+</main>
+<div class="toast" id="toast"></div>
+<script>
+const A=[
+{id:1,cat:"sen",tier:"bronze",icon:"moon",name:"Nocna regeneracja",desc:"Śpij minimum 8 godzin jednej nocy"},
+{id:2,cat:"sen",tier:"bronze",icon:"moon",name:"Wczesna pora",desc:"Idź spać przed 23:00"},
+{id:3,cat:"sen",tier:"bronze",icon:"moon",name:"Naturalne przebudzenie",desc:"Wstań bez budzika — pozwól ciału decydować"},
+{id:4,cat:"sen",tier:"bronze",icon:"moon",name:"Cyfrowy detoks",desc:"Śpij bez telefonu w sypialni przez 1 noc"},
+{id:5,cat:"sen",tier:"bronze",icon:"moon",name:"Power nap",desc:"Drzemka regeneracyjna 20 minut w środku dnia"},
+{id:6,cat:"sen",tier:"silver",icon:"moon",name:"Konsekwentny śpioch",desc:"Śpij min 8h przez 3 noce z rzędu"},
+{id:7,cat:"sen",tier:"silver",icon:"clock",name:"Chronobiolog",desc:"Kładź się spać o tej samej godzinie ±30 min przez 5 dni"},
+{id:8,cat:"sen",tier:"silver",icon:"sun",name:"Poranny wojownik",desc:"Wstań przed 6:00 przez 3 dni z rzędu"},
+{id:9,cat:"sen",tier:"silver",icon:"moon",name:"Wieczorny rytuał",desc:"Tydzień bez ekranu na godzinę przed snem"},
+{id:10,cat:"sen",tier:"silver",icon:"moon",name:"Pięciodniowa passa",desc:"Śpij min 8h przez 5 nocy z rzędu"},
+{id:11,cat:"sen",tier:"gold",icon:"moon",name:"Tydzień snu",desc:"Śpij min 8h przez 7 nocy z rzędu"},
+{id:12,cat:"sen",tier:"gold",icon:"clock",name:"Zegarowy perfekcjonista",desc:"Ta sama godzina zasypiania przez 14 dni z rzędu"},
+{id:13,cat:"sen",tier:"gold",icon:"moon",name:"Dwa tygodnie regeneracji",desc:"Śpij min 8h przez 14 nocy z rzędu"},
+{id:14,cat:"sen",tier:"gold",icon:"sun",name:"Świt",desc:"Wstań przed 6:00 przez 7 dni z rzędu"},
+{id:15,cat:"sen",tier:"gold",icon:"moon",name:"Minimalizm sypialni",desc:"Bez telefonu w sypialni przez cały miesiąc"},
+{id:16,cat:"sen",tier:"platinum",icon:"star",name:"Mistrz snu",desc:"Śpij min 8h przez 30 kolejnych nocy — absolutna elita"},
+{id:17,cat:"sen",tier:"platinum",icon:"star",name:"Chronobiolog Elite",desc:"Ta sama godzina zasypiania przez 30 dni z rzędu"},
+{id:18,cat:"sen",tier:"platinum",icon:"sun",name:"Poranny rytuał",desc:"Wstań przed 6:00 przez 30 dni z rzędu"},
+{id:19,cat:"sen",tier:"platinum",icon:"moon",name:"Żelazna higiena snu",desc:"30 dni bez ekranu na godzinę przed snem"},
+{id:20,cat:"sen",tier:"platinum",icon:"star",name:"Legenda regeneracji",desc:"8h snu i ta sama godzina zasypiania przez 60 dni"},
+{id:21,cat:"cardio",tier:"bronze",icon:"run",name:"Pierwsze kroki",desc:"Przebiegnij 1 km bez przerwy — start jest wszystkim"},
+{id:22,cat:"cardio",tier:"bronze",icon:"run",name:"Pierwsze 5 km",desc:"Przebiegnij 5 km bez przerwy"},
+{id:23,cat:"cardio",tier:"bronze",icon:"bike",name:"Rowerzysta-amator",desc:"Przejedź rowerem 10 km w jednej jeździe"},
+{id:24,cat:"cardio",tier:"bronze",icon:"run",name:"Krokomierz",desc:"10 000 kroków w ciągu jednego dnia"},
+{id:25,cat:"cardio",tier:"bronze",icon:"fire",name:"45 minut bez litości",desc:"Utrzymaj sesję cardio przez 45 nieprzerwanych minut"},
+{id:26,cat:"cardio",tier:"silver",icon:"run",name:"Biegacz",desc:"Przebiegnij 10 km bez przerwy"},
+{id:27,cat:"cardio",tier:"silver",icon:"bike",name:"Rowerzysta",desc:"Przejedź rowerem 30 km w jednej jeździe"},
+{id:28,cat:"cardio",tier:"silver",icon:"fire",name:"2-godzinny wojownik",desc:"Utrzymaj sesję cardio przez pełne 2 godziny"},
+{id:29,cat:"cardio",tier:"silver",icon:"run",name:"5-dniowa passa",desc:"Cardio przez 5 dni z rzędu — bez wyjątków"},
+{id:30,cat:"cardio",tier:"silver",icon:"run",name:"Szybki sprinter",desc:"Przebiegnij 5 km w mniej niż 30 minut"},
+{id:31,cat:"cardio",tier:"silver",icon:"run",name:"Wspinacz",desc:"Wycieczka górska lub trail o długości min 10 km"},
+{id:32,cat:"cardio",tier:"silver",icon:"run",name:"Sub-55 dziesiątka",desc:"Przebiegnij 10 km w mniej niż 55 minut"},
+{id:33,cat:"cardio",tier:"silver",icon:"run",name:"Krokomierz tygodnik",desc:"10 000 kroków przez 7 dni z rzędu"},
+{id:34,cat:"cardio",tier:"gold",icon:"run",name:"Tygodniowy biegacz",desc:"Cardio każdego dnia przez 7 dni z rzędu"},
+{id:35,cat:"cardio",tier:"gold",icon:"run",name:"Piętnastka",desc:"Przebiegnij 15 km bez przerwy"},
+{id:36,cat:"cardio",tier:"gold",icon:"bike",name:"Rowerowy maraton",desc:"Przejedź 100 km rowerem w ciągu jednego tygodnia"},
+{id:37,cat:"cardio",tier:"gold",icon:"run",name:"Krokomierz Elite",desc:"10 000 kroków przez 14 dni z rzędu"},
+{id:38,cat:"cardio",tier:"gold",icon:"run",name:"Półmaraton",desc:"Przebiegnij 21 km — półmaraton bez taryfy ulgowej"},
+{id:39,cat:"cardio",tier:"gold",icon:"run",name:"Setka biegiem",desc:"Łącznie 100 km przebiegniętych — wielki kamień milowy"},
+{id:40,cat:"cardio",tier:"gold",icon:"run",name:"Sub-50 dziesiątka",desc:"Przebiegnij 10 km w mniej niż 50 minut"},
+{id:41,cat:"cardio",tier:"gold",icon:"bike",name:"Rowerowe 300",desc:"Łącznie 300 km przejechanych na rowerze"},
+{id:42,cat:"cardio",tier:"gold",icon:"run",name:"Dwa tygodnie ruchu",desc:"Cardio każdego dnia przez 14 dni z rzędu"},
+{id:43,cat:"cardio",tier:"platinum",icon:"star",name:"Codzienny ruch",desc:"Cardio 30 dni z rzędu — żelazna dyscyplina"},
+{id:44,cat:"cardio",tier:"platinum",icon:"run",name:"Maraton",desc:"Przebiegnij pełen maraton 42,195 km — legenda"},
+{id:45,cat:"cardio",tier:"platinum",icon:"bike",name:"Rowerowy tysiąc",desc:"Łącznie 1000 km przejechanych na rowerze"},
+{id:46,cat:"zywienie",tier:"bronze",icon:"apple",name:"Słodki detoks",desc:"Bez słodyczy przez 1 pełny dzień"},
+{id:47,cat:"zywienie",tier:"bronze",icon:"time",name:"Okno żywieniowe",desc:"IF 16/8 — okno max 8h przez 1 dzień"},
+{id:48,cat:"zywienie",tier:"bronze",icon:"fire",name:"Trening na czczo",desc:"Wykonaj trening bez jedzenia czegokolwiek przed nim"},
+{id:49,cat:"zywienie",tier:"bronze",icon:"apple",name:"Warzywny dzień",desc:"Zjedz co najmniej 5 porcji warzyw w ciągu jednego dnia"},
+{id:50,cat:"zywienie",tier:"bronze",icon:"apple",name:"Domowe gotowanie",desc:"Gotuj i jedz w domu przez 3 dni z rzędu bez wyjątku"},
+{id:51,cat:"zywienie",tier:"bronze",icon:"apple",name:"Bez fast-foodu",desc:"Tydzień bez żadnego fast-foodu — liczy się też kebab!"},
+{id:52,cat:"zywienie",tier:"bronze",icon:"apple",name:"Białkowy start",desc:"Zjedz min 30g białka na śniadanie przez 3 dni z rzędu"},
+{id:53,cat:"zywienie",tier:"silver",icon:"apple",name:"Tydzień bez cukru",desc:"Bez słodyczy przez 7 dni z rzędu"},
+{id:54,cat:"zywienie",tier:"silver",icon:"time",name:"IF wojownik",desc:"Okno żywieniowe max 8h przez 7 dni z rzędu"},
+{id:55,cat:"zywienie",tier:"silver",icon:"fire",name:"Asceta",desc:"Trening na czczo 5 razy"},
+{id:56,cat:"zywienie",tier:"silver",icon:"apple",name:"Białkowy tygodnik",desc:"Min 150g białka dziennie przez 7 dni z rzędu"},
+{id:57,cat:"zywienie",tier:"silver",icon:"apple",name:"Bez alkoholu",desc:"Trzeźwy przez 30 dni z rzędu — pełna jasność umysłu"},
+{id:58,cat:"zywienie",tier:"silver",icon:"apple",name:"Domowy kucharz",desc:"Gotuj i jedz w domu przez 14 dni z rzędu"},
+{id:59,cat:"zywienie",tier:"silver",icon:"apple",name:"Dwa tygodnie bez cukru",desc:"Bez słodyczy przez 14 dni z rzędu"},
+{id:60,cat:"zywienie",tier:"silver",icon:"apple",name:"Czysty talerz",desc:"Bez przetworzonej żywności przez 7 dni z rzędu"},
+{id:61,cat:"zywienie",tier:"silver",icon:"time",name:"IF hard mode",desc:"Okno żywieniowe max 6h (post 18h) przez 5 dni z rzędu"},
+{id:62,cat:"zywienie",tier:"gold",icon:"apple",name:"Miesiąc bez cukru",desc:"Bez słodyczy przez 30 dni z rzędu — żelazna wola"},
+{id:63,cat:"zywienie",tier:"gold",icon:"time",name:"IF mistrz",desc:"Okno żywieniowe max 8h przez 30 dni z rzędu"},
+{id:64,cat:"zywienie",tier:"gold",icon:"fire",name:"Asceta zaawansowany",desc:"Trening na czczo 20 razy"},
+{id:65,cat:"zywienie",tier:"gold",icon:"apple",name:"Białkowy miesięcznik",desc:"Min 150g białka dziennie przez 30 dni z rzędu"},
+{id:66,cat:"zywienie",tier:"gold",icon:"apple",name:"Czysty miesiąc",desc:"Bez przetworzonej żywności przez 30 dni z rzędu"},
+{id:67,cat:"zywienie",tier:"gold",icon:"apple",name:"60 dni bez cukru",desc:"Bez słodyczy przez 60 dni z rzędu — jesteś stalą"},
+{id:68,cat:"zywienie",tier:"gold",icon:"time",name:"IF hard mode mistrz",desc:"Okno żywieniowe max 6h przez 14 dni z rzędu"},
+{id:69,cat:"zywienie",tier:"gold",icon:"apple",name:"Miesięczna kuchnia",desc:"Gotuj i jedz w domu przez 30 dni z rzędu"},
+{id:70,cat:"zywienie",tier:"platinum",icon:"star",name:"Kwartał bez cukru",desc:"Bez słodyczy przez 90 dni z rzędu — legendarny"},
+{id:71,cat:"zywienie",tier:"platinum",icon:"time",name:"IF legenda",desc:"Okno żywieniowe max 8h przez 90 dni z rzędu"},
+{id:72,cat:"zywienie",tier:"platinum",icon:"fire",name:"Asceta legenda",desc:"Trening na czczo 50 razy — absolutna dyscyplina"},
+{id:73,cat:"suplementy",tier:"bronze",icon:"pill",name:"Pierwsza dawka",desc:"Weź wszystkie suplementy zgodnie z planem przez 1 dzień"},
+{id:74,cat:"suplementy",tier:"bronze",icon:"pill",name:"Witamina D",desc:"Witamina D3 każdego dnia przez 7 dni bez przerwy"},
+{id:75,cat:"suplementy",tier:"bronze",icon:"pill",name:"Magnez wieczorem",desc:"Magnez przed snem przez 7 kolejnych wieczorów"},
+{id:76,cat:"suplementy",tier:"bronze",icon:"pill",name:"Poranny protokół",desc:"Suplementy rano o tej samej porze przez 3 dni z rzędu"},
+{id:77,cat:"suplementy",tier:"silver",icon:"pill",name:"Tygodniowy protokół",desc:"Pełny stack suplementów przez 7 dni bez żadnej przerwy"},
+{id:78,cat:"suplementy",tier:"silver",icon:"pill",name:"Omega-3",desc:"Omega-3 każdego dnia przez 14 dni z rzędu"},
+{id:79,cat:"suplementy",tier:"silver",icon:"pill",name:"Kreatyna",desc:"Suplementacja kreatyną przez 4 tygodnie bez przerwy"},
+{id:80,cat:"suplementy",tier:"silver",icon:"pill",name:"Dwa tygodnie protokołu",desc:"Pełny stack suplementów przez 14 dni bez żadnej przerwy"},
+{id:81,cat:"suplementy",tier:"silver",icon:"pill",name:"Witamina D + K2",desc:"D3 i K2 każdego dnia przez 14 dni z rzędu"},
+{id:82,cat:"suplementy",tier:"gold",icon:"pill",name:"Miesięczny protokół",desc:"Pełny stack suplementów przez 30 dni bez przerwy"},
+{id:83,cat:"suplementy",tier:"gold",icon:"pill",name:"D3 + K2 pro",desc:"Witamina D3 i K2 każdego dnia przez 30 dni"},
+{id:84,cat:"suplementy",tier:"gold",icon:"pill",name:"Dwa miesiące",desc:"Pełny stack bez przerwy przez 60 dni z rzędu"},
+{id:85,cat:"suplementy",tier:"gold",icon:"clock",name:"Zegarowy perfekcjonista",desc:"Suplementy o tej samej godzinie codziennie przez 30 dni"},
+{id:86,cat:"suplementy",tier:"platinum",icon:"star",name:"Kwartalny protokół",desc:"Pełny stack suplementów przez 90 dni bez żadnej przerwy"},
+{id:87,cat:"suplementy",tier:"platinum",icon:"star",name:"Pół roku dyscypliny",desc:"Żaden suplement nie pominięty przez 180 dni z rzędu"},
+{id:88,cat:"nawodnienie",tier:"bronze",icon:"water",name:"Poranna woda",desc:"Wypij 500 ml wody zaraz po przebudzeniu — przed kawą!"},
+{id:89,cat:"nawodnienie",tier:"bronze",icon:"water",name:"Dwulitrowy dzień",desc:"Wypij co najmniej 2 litry wody w ciągu jednego dnia"},
+{id:90,cat:"nawodnienie",tier:"bronze",icon:"water",name:"Bez słodkich napojów",desc:"3 dni bez napojów słodzonych — zero coli i soków"},
+{id:91,cat:"nawodnienie",tier:"bronze",icon:"water",name:"Elektrolitowy boost",desc:"Uzupełnij elektrolity po treningu 3 razy z rzędu"},
+{id:92,cat:"nawodnienie",tier:"bronze",icon:"water",name:"Przedtreningowe nawodnienie",desc:"Wypij 500 ml wody przed treningiem przez 5 dni z rzędu"},
+{id:93,cat:"nawodnienie",tier:"silver",icon:"water",name:"Tygodniowe nawodnienie",desc:"2 litry wody dziennie przez 7 dni z rzędu"},
+{id:94,cat:"nawodnienie",tier:"silver",icon:"water",name:"Czysta passa",desc:"Bez słodkich napojów przez 14 dni z rzędu"},
+{id:95,cat:"nawodnienie",tier:"silver",icon:"water",name:"Trzy litry",desc:"3 litry wody dziennie przez 5 dni z rzędu"},
+{id:96,cat:"nawodnienie",tier:"silver",icon:"water",name:"Poranny rytuał wodny",desc:"500 ml wody zaraz po przebudzeniu przez 14 dni z rzędu"},
+{id:97,cat:"nawodnienie",tier:"silver",icon:"water",name:"Herbatka detoks",desc:"Zastąp kawę zieloną herbatą przez 10 dni z rzędu"},
+{id:98,cat:"nawodnienie",tier:"gold",icon:"water",name:"Miesięczne nawodnienie",desc:"2 litry wody dziennie przez 30 dni z rzędu"},
+{id:99,cat:"nawodnienie",tier:"gold",icon:"water",name:"Miesiąc bez słodkich napojów",desc:"30 dni bez żadnych słodzonych napojów — czyste paliwo"},
+{id:100,cat:"nawodnienie",tier:"platinum",icon:"star",name:"Wodna legenda",desc:"2 litry wody dziennie przez 90 dni z rzędu — absolutna elita"},
+];
+
+const ICONS={
+moon:`<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M19.5 14A9 9 0 0 1 8 2.5 8.5 8.5 0 1 0 19.5 14z" fill="#7B8FF5" opacity=".9"/><circle cx="17" cy="5" r="1.3" fill="#b0bcff" opacity=".5"/><circle cx="14.5" cy="2.5" r=".7" fill="#b0bcff" opacity=".35"/></svg>`,
+clock:`<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="8" stroke="#4ade80" stroke-width="1.5"/><path d="M11 7v4.5l3.5 2" stroke="#4ade80" stroke-width="1.5" stroke-linecap="round"/><circle cx="11" cy="11" r="1.2" fill="#4ade80"/></svg>`,
+star:`<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 2l2.47 5.63L20 8.57l-4.5 4.38 1.06 6.18L11 16.25l-5.56 2.88 1.06-6.18L2 8.57l6.53-.94z" fill="#c4aaff"/></svg>`,
+run:`<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="13.5" cy="4.5" r="2" fill="#f87171"/><path d="M11 9l-3.5 8M11 9l3.5 3-2.5 3.5m-3.5-7L5 10.5l-2 2.5" stroke="#f87171" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.5 15.5l2.5 2" stroke="#f87171" stroke-width="1.5" stroke-linecap="round"/></svg>`,
+bike:`<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="5.5" cy="15" r="3.5" stroke="#34d399" stroke-width="1.5"/><circle cx="16.5" cy="15" r="3.5" stroke="#34d399" stroke-width="1.5"/><path d="M5.5 15l4.5-7h4l3.5 7M11 8l1.5-3h3" stroke="#34d399" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+fire:`<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 20c-4 0-7-3-7-7 0-2.5 1.2-4.8 3-6.5 1 1.5 2.5 2 2.5 2S8 6 10.5 3c0 0 3.5 3.5 3.5 6.5 1-.6 1.8-1.8 1.8-3C17.5 9.5 19 13 19 14c0 3.5-3.5 6-8 6z" fill="#fb923c" opacity=".9"/><path d="M11 17c-1.5 0-2.5-1-2.5-2.5 0-1 .5-2 1.5-2.5 0 .8.5 1.5 1 1.5s1-1 1-1.5c1 1 1.5 1.5 1.5 2.5C13.5 16 12.5 17 11 17z" fill="#fde68a" opacity=".75"/></svg>`,
+apple:`<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M14.5 4.5C15.5 2.5 14 1 14 1S11 1.5 10.5 4" stroke="#4ade80" stroke-width="1.3" stroke-linecap="round"/><path d="M11 5.5c-4 0-7 3-7 8 0 3.5 2 6 4.5 6 1.5 0 2.5-1 2.5-1s1 1 2.5 1c2.5 0 4.5-2.5 4.5-6 0-5-3-8-7-8z" fill="#4ade80" opacity=".75"/></svg>`,
+time:`<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="3" y="7" width="16" height="12" rx="2.5" stroke="#a78bfa" stroke-width="1.5"/><path d="M7.5 7V5a3.5 3.5 0 0 1 7 0v2" stroke="#a78bfa" stroke-width="1.5"/><path d="M7.5 12.5h7M7.5 15.5h5" stroke="#a78bfa" stroke-width="1.3" stroke-linecap="round"/></svg>`,
+pill:`<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="2.5" y="8" width="17" height="7" rx="3.5" stroke="#f472b6" stroke-width="1.5"/><line x1="11" y1="8" x2="11" y2="15" stroke="#f472b6" stroke-width="1.5"/><rect x="11" y="8" width="8.5" height="7" rx="3.5" fill="#f472b6" opacity=".25"/></svg>`,
+water:`<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 3C11 3 5 9.5 5 14a6 6 0 0 0 12 0c0-4.5-6-11-6-11z" fill="#38bdf8" opacity=".8"/><path d="M8 15.5c.5 1.5 2 2.5 3 2.5" stroke="#fff" stroke-width="1.2" stroke-linecap="round" opacity=".5"/></svg>`,
+sun:`<svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="4" fill="#fbbf24"/><line x1="11" y1="3" x2="11" y2="5.5" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round"/><line x1="11" y1="16.5" x2="11" y2="19" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round"/><line x1="3" y1="11" x2="5.5" y2="11" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round"/><line x1="16.5" y1="11" x2="19" y2="11" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round"/><line x1="5.64" y1="5.64" x2="7.41" y2="7.41" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round"/><line x1="14.59" y1="14.59" x2="16.36" y2="16.36" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round"/><line x1="5.64" y1="16.36" x2="7.41" y2="14.59" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round"/><line x1="14.59" y1="7.41" x2="16.36" y2="5.64" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round"/></svg>`,
+};
+
+const CAT_LABELS={sen:"Sen",cardio:"Cardio",zywienie:"Żywienie",suplementy:"Suplementy",nawodnienie:"Nawodnienie"};
+const CAT_ICONS={sen:"🌙",cardio:"🏃",zywienie:"🥗",suplementy:"💊",nawodnienie:"💧"};
+const TIER_LABELS={bronze:"Brąz",silver:"Srebro",gold:"Złoto",platinum:"Platyna"};
+const TIER_ORDER={bronze:0,silver:1,gold:2,platinum:3};
+const CATS=["sen","cardio","zywienie","suplementy","nawodnienie"];
+const TIER_COUNTS={bronze:30,silver:35,gold:22,platinum:13};
+
+let unlocked={},currentCat="all",currentSort="default";
+
+function save(){try{localStorage.setItem("ha3_state",JSON.stringify(unlocked));}catch(e){}}
+function load(){try{const d=localStorage.getItem("ha3_state");if(d)unlocked=JSON.parse(d);}catch(e){}}
+
+function showToast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg;t.classList.add("show");
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),2400);
+}
+
+function getFiltered(){
+  let list=currentCat==="all"?[...A]:A.filter(a=>a.cat===currentCat);
+  if(currentSort==="tier") list=[...list].sort((a,b)=>TIER_ORDER[b.tier]-TIER_ORDER[a.tier]);
+  if(currentSort==="unlocked") list=[...list].sort((a,b)=>(unlocked[b.id]?1:0)-(unlocked[a.id]?1:0));
+  return list;
+}
+
+function updateHeader(){
+  const u=A.filter(a=>unlocked[a.id]).length;
+  const tot=A.length;
+  document.getElementById("h-unlocked").textContent=u;
+  document.getElementById("h-pct").textContent=Math.round(u/tot*100)+"%";
+  document.getElementById("pbar").style.width=(u/tot*100)+"%";
+  document.getElementById("pbar-label").textContent=u+" / "+tot;
+  ["bronze","silver","gold","platinum"].forEach(t=>{
+    document.getElementById("ts-"+t[0]).textContent=A.filter(a=>a.tier===t&&unlocked[a.id]).length;
+  });
+}
+
+function updateTabs(){
+  document.querySelectorAll(".tab").forEach(tab=>{
+    const cat=tab.dataset.cat;
+    const items=cat==="all"?A:A.filter(a=>a.cat===cat);
+    const u=items.filter(a=>unlocked[a.id]).length;
+    const cnt=tab.querySelector(".cnt");
+    if(cnt)cnt.textContent=u+"/"+items.length;
+    tab.classList.toggle("active",cat===currentCat);
+  });
+}
+
+function buildCard(a){
+  const isU=!!unlocked[a.id];
+  const card=document.createElement("div");
+  card.className=`card t-${a.tier} ${isU?"unlocked":"locked"}`;
+  const dateStr=unlocked[a.id]?new Date(unlocked[a.id]).toLocaleDateString("pl-PL"):"";
+  card.innerHTML=`<div class="tier-line"></div>
+<div class="card-top">
+  <div class="icon-box">${ICONS[a.icon]||ICONS.star}</div>
+  <div class="right-top"><span class="tier-pill">${TIER_LABELS[a.tier]}</span><span class="check">✓</span></div>
+</div>
+<div class="card-name">${isU?"":'<span style="opacity:.35;margin-right:3px">🔒</span>'}${a.name}</div>
+<div class="card-desc">${a.desc}</div>
+<div class="card-footer">
+  <span class="cat-label">${CAT_ICONS[a.cat]} ${CAT_LABELS[a.cat]}</span>
+  <div>${isU?`<div class="status-done">✓ Zrobione</div><div class="unlock-date">${dateStr}</div>`:`<div class="status-todo">Nieukończone</div>`}</div>
+</div>`;
+  card.onclick=()=>{
+    if(unlocked[a.id]){delete unlocked[a.id];showToast("🔒 Zablokowano: "+a.name);}
+    else{unlocked[a.id]=Date.now();showToast("🏆 Odblokowano: "+a.name+"!");}
+    save();render();
+  };
+  return card;
+}
+
+function render(){
+  const list=getFiltered();
+  const u=list.filter(a=>unlocked[a.id]).length;
+  document.getElementById("ctrl-label").textContent=`${u} z ${list.length} odblokowanych`;
+  const container=document.getElementById("grid-container");
+  container.innerHTML="";
+  if(currentCat==="all"){
+    CATS.forEach(cat=>{
+      const items=list.filter(a=>a.cat===cat);
+      if(!items.length)return;
+      const sec=document.createElement("div");
+      const hdr=document.createElement("div");hdr.className="sec-hdr";
+      hdr.textContent=CAT_ICONS[cat]+" "+CAT_LABELS[cat];
+      const grid=document.createElement("div");grid.className="grid";
+      items.forEach(a=>grid.appendChild(buildCard(a)));
+      sec.appendChild(hdr);sec.appendChild(grid);container.appendChild(sec);
+    });
+  } else {
+    const grid=document.createElement("div");grid.className="grid";
+    list.forEach(a=>grid.appendChild(buildCard(a)));
+    container.appendChild(grid);
+  }
+  updateHeader();updateTabs();
+}
+
+document.getElementById("tabs").addEventListener("click",e=>{
+  const tab=e.target.closest(".tab");if(!tab)return;
+  currentCat=tab.dataset.cat;render();
+});
+document.querySelectorAll(".sort-btn").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll(".sort-btn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");currentSort=btn.dataset.sort;render();
+  });
+});
+document.getElementById("reset-btn").addEventListener("click",()=>{
+  if(confirm("Na pewno zresetować cały postęp? Tej operacji nie można cofnąć.")){
+    unlocked={};save();render();showToast("Zresetowano postęp");
+  }
+});
+
+document.querySelectorAll(".tab").forEach(tab=>{
+  const s=document.createElement("span");s.className="cnt";s.textContent="0/0";tab.appendChild(s);
+});
+
+load();render();
+</script>
+</body>
+</html>
